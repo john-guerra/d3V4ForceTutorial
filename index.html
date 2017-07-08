@@ -7,7 +7,7 @@
 <body>
 
 <h1>Force Tutorial</h1>
-<canvas id="network" width="800" height="800"></canvas>
+<canvas id="network" width="500" height="500"></canvas>
 
 <script src="https://d3js.org/d3.v4.min.js"></script>
 
@@ -30,14 +30,15 @@ var canvas = d3.select("#network"),
   width = canvas.attr("width"),
   height = canvas.attr("height"),
   ctx = canvas.node().getContext("2d"),
-  r = 3;
+  r = 3,
+  simulation = d3.forceSimulation()
+    .force("x", d3.forceX(width/2))
+    .force("y", d3.forceY(height/2))
+    .on("tick", update);
 
 
-graph.nodes.forEach(function (d) {
-  d.x = Math.random()*width;
-  d.y = Math.random()*height;
-});
 
+simulation.nodes(graph.nodes);
 
 function update() {
   ctx.clearRect(0, 0, width, height);
