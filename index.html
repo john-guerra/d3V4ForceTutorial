@@ -22,6 +22,14 @@ var graph = {
     {name: "David", age: 3},
     {name: "Santi", age: 9},
     {name: "Yuli", age: 30}
+  ],
+  links: [
+    {source: "John", target: "Mafe"},
+    {source: "John", target: "Edwin"},
+    {source: "Santi", target: "Edwin"},
+    {source: "David", target: "Edwin"},
+    {source: "David", target: "Santi"},
+    {source: "Yuli", target: "Edwin"}
   ]
 };
 
@@ -30,20 +38,30 @@ var canvas = d3.select("#network"),
   width = canvas.attr("width"),
   height = canvas.attr("height"),
   ctx = canvas.node().getContext("2d"),
-  r = 30,
+  r = 3,
   simulation = d3.forceSimulation()
     .force("x", d3.forceX(width/2))
     .force("y", d3.forceY(height/2))
     .force("collide", d3.forceCollide(r+1))
-    .force("charge", d3.forceManyBody().strength(-20))
-    .on("tick", update);
+    .force("charge", d3.forceManyBody()
+      .strength(-200))
+    .on("tick", update)
+    .force("link", d3.forceLink()
+      .id(function (d) { return d.name; }));
 
 
 
 simulation.nodes(graph.nodes);
+simulation.force("link")
+  .links(graph.links);
 
 function update() {
   ctx.clearRect(0, 0, width, height);
+
+  ctx.beginPath();
+  graph.links.forEach(drawLink);
+  ctx.stroke();
+
 
   ctx.beginPath();
   graph.nodes.forEach(drawNode);
@@ -55,6 +73,12 @@ function drawNode(d) {
   ctx.moveTo(d.x, d.y);
   ctx.arc(d.x, d.y, r, 0, Math.PI*2);
 }
+
+function drawLink(l) {
+  ctx.moveTo(l.source.x, l.source.y);
+  ctx.lineTo(l.target.x, l.target.y);
+}
+
 
 update();
 
