@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Force Tutorial</title>
+</head>
+<body>
+
+<h1>Force Tutorial</h1>
+<canvas id="network" width="500" height="500"></canvas>
+
+<script src="https://d3js.org/d3.v4.min.js"></script>
+
+<script>
+/* global d3 */
+
+
+
+var canvas = d3.select("#network"),
+  width = canvas.attr("width"),
+  height = canvas.attr("height"),
+  ctx = canvas.node().getContext("2d"),
+  r = 3,
+  color = d3.scaleOrdinal(d3.schemeCategory20),
+  x = d3.scaleOrdinal().range([20,width-20]),
+  simulation = d3.forceSimulation()
+    .force("x", d3.forceX(function (d) { return x(d.party); })
+      .strength(0.9))
+    .force("y", d3.forceY(height/2))
+    .force("collide", d3.forceCollide(r+1))
+    .force("charge", d3.forceManyBody()
+      .strength(-20))
+    .force("link", d3.forceLink()
+      .id(function (d) { return d.name; }));
+
+
+d3.json("VotacionesSenado2017.json", function (err, graph) {
+  if (err) throw err;
+
+  simulation.nodes(graph.nodes);
+  simulation.force("link")
+    .links(graph.links);
+  simulation.on("tick", update);
+
+  canvas
+      .call(d3.drag()
+          .container(canvas.node())
+          .subject(dragsubject)
+          .on("start", dragstarted)
+          .on("drag", dragged)
+          .on("end", dragended));
+
+  function update() {
+    ctx.clearRect(0, 0, width, height);
+
+    ctx.beginPath();
+    ctx.globalAlpha = 0.1;
+    ctx.strokeStyle = "#aaa";
+    graph.links.forEach(drawLink);
+    ctx.stroke();
+
+
+    ctx.globalAlpha = 1.0;
+    graph.nodes.forEach(drawNode);
+  }
+
+  function dragsubject() {
+    return simulation.find(d3.event.x, d3.event.y);
+  }
+
+});
+
+function dragstarted() {
+  if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+  d3.event.subject.fx = d3.event.subject.x;
+  d3.event.subject.fy = d3.event.subject.y;
+  console.log(d3.event.subject);
+}
+
+function dragged() {
+  d3.event.subject.fx = d3.event.x;
+  d3.event.subject.fy = d3.event.y;
+}
+
+function dragended() {
+  if (!d3.event.active) simulation.alphaTarget(0);
+  d3.event.subject.fx = null;
+  d3.event.subject.fy = null;
+}
+
+
+
+function drawNode(d) {
+  ctx.beginPath();
+  ctx.fillStyle = color(d.party);
+  ctx.moveTo(d.x, d.y);
+  ctx.arc(d.x, d.y, r, 0, Math.PI*2);
+  ctx.fill();
+}
+
+function drawLink(l) {
+  ctx.moveTo(l.source.x, l.source.y);
+  ctx.lineTo(l.target.x, l.target.y);
+}
+
+
+
+
+</script>
+
+</body>
+</html>
