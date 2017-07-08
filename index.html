@@ -14,24 +14,6 @@
 <script>
 /* global d3 */
 
-var graph = {
-  nodes: [
-    {name: "John", age: 35},
-    {name: "Mafe", age: 34},
-    {name: "Edwin", age: 39},
-    {name: "David", age: 3},
-    {name: "Santi", age: 9},
-    {name: "Yuli", age: 30}
-  ],
-  links: [
-    {source: "John", target: "Mafe"},
-    {source: "John", target: "Edwin"},
-    {source: "Santi", target: "Edwin"},
-    {source: "David", target: "Edwin"},
-    {source: "David", target: "Santi"},
-    {source: "Yuli", target: "Edwin"}
-  ]
-};
 
 
 var canvas = d3.select("#network"),
@@ -39,39 +21,52 @@ var canvas = d3.select("#network"),
   height = canvas.attr("height"),
   ctx = canvas.node().getContext("2d"),
   r = 3,
+  color = d3.scaleOrdinal(d3.schemeCategory20),
   simulation = d3.forceSimulation()
     .force("x", d3.forceX(width/2))
     .force("y", d3.forceY(height/2))
     .force("collide", d3.forceCollide(r+1))
     .force("charge", d3.forceManyBody()
-      .strength(-200))
-    .on("tick", update)
+      .strength(-20))
     .force("link", d3.forceLink()
       .id(function (d) { return d.name; }));
 
 
+d3.json("VotacionesSenado2017.json", function (err, graph) {
+  if (err) throw err;
 
-simulation.nodes(graph.nodes);
-simulation.force("link")
-  .links(graph.links);
+  simulation.nodes(graph.nodes);
+  simulation.force("link")
+    .links(graph.links);
+  simulation.on("tick", update);
 
-function update() {
-  ctx.clearRect(0, 0, width, height);
+  function update() {
+    ctx.clearRect(0, 0, width, height);
 
-  ctx.beginPath();
-  graph.links.forEach(drawLink);
-  ctx.stroke();
+    ctx.beginPath();
+    ctx.globalAlpha = 0.1;
+    ctx.strokeStyle = "#aaa";
+    graph.links.forEach(drawLink);
+    ctx.stroke();
 
 
-  ctx.beginPath();
-  graph.nodes.forEach(drawNode);
-  ctx.fill();
+    ctx.globalAlpha = 1.0;
+    graph.nodes.forEach(drawNode);
 
-}
+
+  }
+
+});
+
+
+
 
 function drawNode(d) {
+  ctx.beginPath();
+  ctx.fillStyle = color(d.party);
   ctx.moveTo(d.x, d.y);
   ctx.arc(d.x, d.y, r, 0, Math.PI*2);
+  ctx.fill();
 }
 
 function drawLink(l) {
@@ -79,8 +74,6 @@ function drawLink(l) {
   ctx.lineTo(l.target.x, l.target.y);
 }
 
-
-update();
 
 
 
